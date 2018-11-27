@@ -6,6 +6,14 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+func4 = lambda x, y: x**2 + y**2
+func4_grad_x = lambda x, y: 2*x
+func4_grad_y = lambda x, y: 2*y
+
+func3 = lambda x, y: (x-y)**2
+func3_grad_x = lambda x, y: 2*(x-y)
+func3_grad_y = lambda x, y: -2*(x-y)
+
 func2 = lambda x, y: math.cos(math.pi * x) * (y-1)**2
 func2_grad_x = lambda x, y: -math.pi * math.sin(math.pi * x) * (y-1)**2
 func2_grad_y = lambda x, y: math.cos(math.pi * x) * 2 * (y-1)
@@ -15,78 +23,74 @@ func1_grad_x = lambda x, y: -2*math.cos(x)*math.sin(x)*math.sin(y)
 func1_grad_y = lambda x, y: (math.cos(x))**2 * math.cos(y)
 
 dist = lambda x1, y1, x2, y2: math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-def gradient_descent(grad_x, grad_y):
-   # массив для хранения траектории
-   traj_x = list()
-   traj_y = list()
-   # параметры алгоритма
+
+def line_search(func, x_start, y_start, dir_x, dir_y):
+   gold_ratio = (3 - math.sqrt(5))/2
+   eps = 0.01
+   x_end = x_start + 10 * dir_x
+   y_end = y_start + 10 * dir_y
+   x_middle = x_start + (x_end - x_start) * gold_ratio
+   y_middle = y_start + (y_end - y_start) * gold_ratio
+   while dist(x_start, y_start, x_end, y_end) > eps:
+      d_x = x_start - (x_end - x_start) * gold_ratio
+      d_y = y_start - (y_end - y_start) * gold_ratio
+      if func(d_x, d_y) < func(x_middle, y_middle):
+         x_start, x_middle = x_middle, d_x
+         y_start, y_middle = y_middle, d_y
+      elif func(d_x, d_y) > func(x_middle, y_middle):
+         x_end, x_start = x_start, d_x
+         y_end, y_start = y_start, d_y
+   return x_middle, y_middle
+
+
+def conjugate_gradient(x_start, y_start, eps, func, grad_x, grad_y):
    max_iterations = 1000
-   gamma = 0.01
-   precision = 0.001
-   # начальная точка
-   x_start, y_start = 3, 1.8
    iter = 0
-   last_step_size = 1
-   cur_x, cur_y = x_start, y_start
-   while iter < max_iterations and precision < last_step_size:
-      prev_x, prev_y = cur_x, cur_y
-      cur_x -= gamma * grad_x(prev_x, prev_y)
-      cur_y -= gamma * grad_y(prev_x, prev_y)
-      last_step_size = dist(prev_x, prev_y, cur_x, cur_y)
-      traj_x.append(cur_x)
-      traj_y.append(cur_y)
-      iter += 1
-   
-   print(f'Minimum at x = {cur_x}, y = {cur_y}. \n Number of iterations - {iter}')
-   return traj_x, traj_y
 
-def loose_line_search(func, x_start, y_start, func_grad_x, func_grad_y):
-   step = 0.01
-   cnt = 1
-   dir = func1_grad_y(x_start, y_start)/func1_grad_x(x_start, y_start) 
-   x_l, y_l = x_start, y_start
-   x, y = x_start + step, y_start + step*dir
-   x_r, y_r = x_start + 2 * step, y_start + 2 * step * dir
-   while not func(x, y) < func(x_l, y_l) and func(x, y) < func(x_r, y_r):
-      x_l += step
-      y_l += dir * step 
-      x += step
-      y += dir * step 
-      x_r += step
-      y_r += dir * step 
-      cnt += 1
-   return cnt * step
+      
 
-def conjugate_gradient(func, grad_x, grad_y, type):
-   max_iterations = 10
-   precision = 0.0001
-   x_start, y_start = 1, 1
+def line_search(func, x_start, y_start, dir_x, dir_y):
+   # dir = grad_y(x_start, y_start) / grad_x(x_start, y_start)
+   step = 0.001
+   x = x_start + step * dir_x
+   y = y_start + step * dir_y
+   while func(x, y) < func(x_start, y_start):
+      x += step * dir_x
+      y += step * dir_y
+
+   return dist(x, y, x_start, y_start)
+
+def conjugate_gradient(func, grad_x, grad_y):
    traj_x = list()
    traj_y = list()
+   max_iterations = 1000
+   precision = 0.001
+   x_start, y_start = -4, 4
    iter = 0
-   x_prev, y_prev = x_start, y_start
-   x_dir_new = grad_x(x_start, y_start)
-   y_dir_new = grad_y(x_start, y_start)
-   upd_dir = 0
-   x_new = x_start
-   y_new = y_start
-   while math.sqrt(grad_x(x_new, y_new)**2 + grad_y(x_new, y_new)**2) > precision or iter < max_iterations:
-      x_prev = x_new
-      y_prev = x_new
-      x_dir_prev = x_dir_new
-      y_dir_prev = y_dir_new
-      # if type == 'PR':
-         # beta = (x_new * (x_new - x_prev) + y_new * (y_new - y_prev))/(x_prev ** 2 + y_prev ** 2)
-      upd_dir = 1
-      x_dir_new = grad_x(x_new, y_new) + upd_dir * x_dir_prev
-      y_dir_new = grad_y(x_new, y_new) + upd_dir * y_dir_prev
-      step = loose_line_search(func, x_new, y_new, grad_x, grad_y)
-      x_new = x_prev + step * x_dir_new
-      y_new = y_prev + step * y_dir_new
-      traj_x.append(x_new)
-      traj_y.append(y_new)
+   step = 10
+   new_dir_x = -grad_x(x_start, y_start)
+   new_dir_y = -grad_x(x_start, y_start)
+   new_x = x_start
+   new_y = y_start
+   prev_x = new_x
+   prev_y = new_y
+   while step > precision and iter < max_iterations:
+      chng = (grad_x(new_x, new_y) * (grad_x(new_x, new_y) - grad_x(prev_x, prev_y)) + grad_y(new_x, new_y) * (grad_y(new_x, new_y) - grad_y(prev_x, prev_y)))/(grad_x(prev_x, prev_y) ** 2 + grad_y(prev_x, prev_y) ** 2)
+      prev_dir_x = new_dir_x
+      prev_dir_y = new_dir_y
+      new_dir_x = -grad_x(new_x, new_y) + chng * prev_dir_x
+      new_dir_y = -grad_y(new_x, new_y) + chng * prev_dir_y
+      dir = new_dir_y / new_dir_x
+      step = line_search(func, new_x, new_y, new_dir_x, new_dir_y)
+      prev_x = new_x
+      prev_y = new_y
+      new_x += step * new_dir_x
+      new_y += step * new_dir_y
+      traj_x.append(new_x)
+      traj_y.append(new_y)
       iter += 1
 
+   print(f'Minimum at x = {new_x}, y = {new_y}. \n Number of iterations - {iter}')
    return traj_x, traj_y
 
 def draw_plot(func, traj_x, traj_y):
@@ -107,5 +111,6 @@ def draw_plot(func, traj_x, traj_y):
    plt.show()
 
 if __name__ == '__main__':
-   traj_x, traj_y = gradient_descent(func1_grad_x, func1_grad_y)
-   draw_plot(func1, traj_x, traj_y)
+   traj_x, traj_y = gradient_descent(func4_grad_x, func4_grad_y)
+   # print(traj_x)
+   draw_plot(func4, traj_x, traj_y)
