@@ -1,23 +1,40 @@
 # TODO: Сделать градиентный спуск с динамичиским шагом
+#       реализовать line_search
 
-import math
+import math 
+import matplotlib.pyplot as plt
+func = lambda x: (x-2)**2
 
-func4 = lambda x, y: x**2 + y**2
-func4_grad_x = lambda x, y: 2*x
-func4_grad_y = lambda x, y: 2*y
-dist = lambda x1, y1, x2, y2: math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+# метод золотого сечения
+def line_search(func, x_start):
+   traj_x = list()
+   iter = 0
+   gold_ratio = (1 + math.sqrt(5))/2
+   x_end = x_start + 10
+   c = x_end - (x_end - x_start)/gold_ratio
+   d = x_start + (x_end - x_start)/gold_ratio
+   while iter < 100:
+      if func(c) < func(d):
+         x_end = d
+      else:
+         x_start = c
+      c = x_end - (x_end - x_start) / gold_ratio
+      d = x_start + (x_end - x_start) / gold_ratio
+      traj_x.append((x_start + x_end)/2)
+      iter += 1
+   return traj_x
 
 
-def line_search(func, x_start, y_start, dir_x, dir_y):
-   # dir = grad_y(x_start, y_start) / grad_x(x_start, y_start)
-   step = 0.01
-   x = x_start - step * dir_x
-   y = y_start - step * dir_y
-   while func(x, y) < func(x_start, y_start):
-      x -= step * dir_x
-      y -= step * dir_y
-
-   return dist(x, y, x_start, y_start)
+def draw_plot(func, traj_x):
+   x = [-5 + 0.1 * i for i in range(100)]
+   y = [func(s) for s in x]
+   traj_y = [func(s) for s in traj_x]
+   plt.plot(x, y)
+   plt.scatter(traj_x, traj_y, marker='x', color = 'red')
+   plt.scatter(traj_x[-1], func(traj_x[-1]), color = 'green')
+   plt.show()
+   
 
 if __name__ == '__main__':
-   print(line_search(func4, -4, 4, -8, 8))
+   traj_x = line_search(func, 0)
+   draw_plot(func, traj_x)
