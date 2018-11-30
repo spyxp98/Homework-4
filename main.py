@@ -79,7 +79,7 @@ def line_search(func, x_start, y_start, dir_x, dir_y):
 
 def conjugate_gradient(func, grad_x, grad_y):
    # инициализация переменных
-   x_start, y_start = -10, 4
+   x_start, y_start = 4, -4
    max_iterations = 1000
    iter = 0
    last_step = 10
@@ -97,8 +97,8 @@ def conjugate_gradient(func, grad_x, grad_y):
       y_prev = y_new
       temp_x, temp_y = line_search(func, x_prev, y_prev, dir_x_prev, dir_y_prev)
       x_new, y_new = temp_x[-1], temp_y[-1]
-      traj_x.append(x_new)
-      traj_y.append(y_new)
+      traj_x.append(x_prev)
+      traj_y.append(y_prev)
       try:
          beta = (((grad_x(x_new, y_new))**2 + (grad_y(x_new, y_new))**2) / 
                    ((grad_x(x_prev, y_prev))**2 + (grad_y(x_prev, y_prev))**2))
@@ -128,7 +128,7 @@ def draw_plot(func, traj_x, traj_y):
    h = plt.contourf(x,y,z)
    plt.contour(h, colors = 'k')
    plt.colorbar(h)
-   traj = plt.scatter(traj_x, traj_y, color = 'red')
+   traj = plt.scatter(traj_x, traj_y)
    plt.scatter(points_x, points_y, color = 'red', marker = 'x')
    plt.show()
 
