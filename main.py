@@ -26,6 +26,10 @@ rosen = lambda x, y: (1-x)**2 + 100 * (y - x**2)**2
 rosen_grad_x = lambda x, y: 2 * (x - 1) + 200 * (y - x**2) * (-2*x)
 rosen_grad_y = lambda x, y: 200 * (y - x ** 2) 
 
+func5 = lambda x, y: x**4 - x**2 + y**4 - y**2
+func5_grad_x = lambda x, y: 4 * x**3 - 2 * x
+func5_grad_y = lambda x, y: 4 * y**3 - 2 * y
+
 dist = lambda x1, y1, x2, y2: math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
 def gradient_descent(func, grad_x, grad_y):
@@ -55,8 +59,8 @@ def line_search(func, x_start, y_start, dir_x, dir_y):
    traj_y = list()
    iter = 0
    gold_ratio = (1 + math.sqrt(5))/2
-   x_end = x_start + 100 * dir_x
-   y_end = y_start + 100 * dir_y
+   x_end = x_start + 10 * dir_x
+   y_end = y_start + 10 * dir_y
    c_x = x_end - (x_end - x_start)/gold_ratio
    d_x = x_start + (x_end - x_start)/gold_ratio
    c_y = y_end - (y_end - y_start)/gold_ratio
@@ -79,8 +83,8 @@ def line_search(func, x_start, y_start, dir_x, dir_y):
 
 def conjugate_gradient(func, grad_x, grad_y):
    # инициализация переменных
-   x_start, y_start = 4, -4
-   max_iterations = 1000
+   x_start, y_start = 2, 4
+   max_iterations = 100000
    iter = 0
    last_step = 10
    traj_x = list()
@@ -100,7 +104,7 @@ def conjugate_gradient(func, grad_x, grad_y):
       traj_x.append(x_prev)
       traj_y.append(y_prev)
       try:
-         beta = (((grad_x(x_new, y_new))**2 + (grad_y(x_new, y_new))**2) / 
+         temp_beta = (((grad_x(x_new, y_new))**2 + (grad_y(x_new, y_new))**2) / 
                    ((grad_x(x_prev, y_prev))**2 + (grad_y(x_prev, y_prev))**2))
          # beta = ((grad_x(x_new, y_new) * (grad_x(x_new, y_new) - grad_x(x_prev, y_prev)) + 
                # grad_y(x_new, y_new) * (grad_y(x_new, y_new) - grad_y(x_prev, y_prev))) / 
@@ -108,6 +112,10 @@ def conjugate_gradient(func, grad_x, grad_y):
                #  dir_y_prev * (grad_y(x_new, y_new) - grad_y(x_prev, y_prev))))
       except ZeroDivisionError:
          break
+      if temp_beta > 0:
+         beta = 0
+      else:
+         beta = temp_beta
       dir_x_new = - 1 * grad_x(x_new, y_new) + dir_x_prev * beta
       dir_y_new = - 1 * grad_y(x_new, y_new) + dir_y_prev * beta
       last_step = dist(x_new, y_new, x_prev, y_prev)
@@ -133,9 +141,9 @@ def draw_plot(func, traj_x, traj_y):
    plt.show()
 
 if __name__ == '__main__':
-   traj_x, traj_y = conjugate_gradient(func4, func4_grad_x, func4_grad_y)
+   traj_x, traj_y = conjugate_gradient(func5, func5_grad_x, func5_grad_y)
    # print(traj_x)
    # print(line_search(func4, 4, 4, func4_grad_x(4, 4), func4_grad_y(4, 4)))
    # print(traj_x)
-   draw_plot(func4, traj_x, traj_y)
+   draw_plot(func5, traj_x, traj_y)
    print(traj_x[-1], traj_y[-1])
